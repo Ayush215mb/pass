@@ -1,6 +1,6 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
-import React, {useEffect, useState} from "react";
+import React, { useState} from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -12,17 +12,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 
-const Signup = () => {
+function Signup () {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { signUp } = useAuth();
-
-  useEffect(() => {
-    router.push("/(auth)/onboarding")
-  }, []);
-
 
   const handleSignUp = async () => {
     setIsLoading(true);
@@ -35,6 +30,7 @@ const Signup = () => {
     }
     try {
       await signUp(email, password);
+      router.push("/(auth)/onboarding");
     } catch (err) {
       Alert.alert("Error", "Failed to sign up");
       console.error(err);
