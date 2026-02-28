@@ -3,10 +3,10 @@ import {File} from "expo-file-system"
 import {supabase} from "@/lib/supabase/client";
 
 
-export const uploadProfileImage= async (userId: string |undefined,imageUri:string): Promise<string | undefined> => {
+export const uploadProfileImage= async (userId: string |undefined, imageUri:string): Promise<string | undefined> => {
     try{
         const fileExtension= imageUri.split('.').pop() || "jpg";
-        const fileName= `${userId}/profile.${fileExtension}}`;
+        const fileName= `${userId}/profile.${fileExtension}`;
 
         const file= new File(imageUri);
 

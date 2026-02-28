@@ -1,11 +1,35 @@
 import { useRouter } from "expo-router";
-import React from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, {useState} from "react";
+import {ActivityIndicator, Alert, Text, TextInput, TouchableOpacity, View} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import {useAuth} from "@/context/AuthContext";
 
 
 const Login = () => {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const {signIn} = useAuth()
+
+  const handleLogIn = async () => {
+    setIsLoading(true);
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill all the details");
+    }
+
+    try {
+      await signIn(email, password);
+      router.push("/(tabs)/profile");
+    } catch (err) {
+      Alert.alert("Error", "Failed to sign in");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView
       edges={["top", "bottom"]}
@@ -25,6 +49,8 @@ const Login = () => {
           placeholderTextColor="#999"
           autoComplete="email"
           className="border rounded-xl px-3 w-full mb-4 "
+          value={email}
+          onChangeText={setEmail}
         />
         <TextInput
           placeholder="Enter your password"
@@ -32,12 +58,18 @@ const Login = () => {
           autoComplete="password"
           secureTextEntry
           className="border rounded-xl px-3 w-full mb-4 "
+          value={password}
+          onChangeText={setPassword}
         />
 
-        <TouchableOpacity className="bg-black w-full rounded-lg h-12 justify-center mb-5 ">
-          <Text className="text-white font-bold text-center text-xl">
-            Sign in
-          </Text>
+        <TouchableOpacity className="bg-black w-full rounded-lg h-12 justify-center mb-5 " onPress={handleLogIn}>
+          {isLoading ? (
+              <ActivityIndicator size={24} color={"#fff"} />
+          ) : (
+              <Text className="text-white font-bold text-center text-xl">
+                Sign in
+              </Text>
+          )}
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {

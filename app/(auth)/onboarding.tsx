@@ -13,16 +13,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker"
 import {supabase} from "@/lib/supabase/client";
 import {uploadProfileImage} from "@/lib/supabase/storage";
-import {useAuth} from "@/context/AuthContext";
+import {useAuth,User} from "@/context/AuthContext";
 import {useRouter} from "expo-router";
-
 function Onboarding (){
+    const router = useRouter()
     const [isLoading, setIsLoading] = useState(false);
     const[profileImage,setProfileImage] = useState<string | null>(null);
     const [name, setName] = useState("");
     const [username, setUsername] = useState("");
     const {user,updateUser} = useAuth()
-    const router = useRouter()
+
+
+
+    //function to take image from gallery
     const pickImage=async()=>{
         const {status} = await ImagePicker.requestMediaLibraryPermissionsAsync()
         if(status !== "granted"){
@@ -37,13 +40,13 @@ function Onboarding (){
             quality:0.8
         })
         if(!result.canceled && result.assets[0]){
-            console.log(result.assets[0].uri)
             setProfileImage(result.assets[0].uri)
 
         }
 
     }
 
+    //function to take image through cameraa
     const takePhoto = async()=>{
         const {status} = await ImagePicker.requestCameraPermissionsAsync()
         if(status !== "granted"){
@@ -64,6 +67,7 @@ function Onboarding (){
 
     }
 
+    //the option to select camera or gallery
     const showImagePicker =  () => {
         Alert.alert("Select Profile Image", "Pick an option",[
             {text:"Camera", onPress: takePhoto},
@@ -72,6 +76,7 @@ function Onboarding (){
         ])
     }
 
+    // the main function which handles everything when the set up btn is pressed
     const handleComplete= async()=>{
         if(!name || !username){
             Alert.alert("Please enter your name and username");
@@ -104,21 +109,20 @@ function Onboarding (){
                     console.error("error while uploading the image",error)
                     Alert.alert("Error while uploading the image")
                 }
-
             }
-
             //update profile
             await updateUser({
                 name,
                 username,
-                profile_Image_Url: profileImageUrl,
-                onboardingComplete:true
+                profile_image_url: profileImageUrl,
+                onboarding_completed:true
             })
 
             console.log("Every thing completer as per required")
 
         }catch(e){
             Alert.alert("Error","Failed to complete the onboarding. Please try again.");
+            console.error("Failed to complete the onboarding",e)
         }finally {
             setIsLoading(false);
         }
@@ -137,7 +141,10 @@ function Onboarding (){
 
             <View className="items-center ">
                 <TouchableOpacity className={"mb-8 relative "} onPress={showImagePicker} >
-                    {profileImage ? (<Image  source={{uri:profileImage}} className={"w-[120px] h-[120px] rounded-[60px] bg-[#f5f5f5]  "}  />):(
+                    {profileImage ? (
+                        <View>
+                        <Image  source={{uri:profileImage}} style={{ width: 120, height: 120, borderRadius: 60 }}  />
+                    </View>):(
                         <View className={"w-[120px] h-[120px] relative bg-[#f5f5f5] rounded-[60px] justify-center items-center border-2 border-[#e0e0e0] border-dashed "}>
                             <Text className={"text-[#999] text-5xl  "}>+</Text>
                         </View>
