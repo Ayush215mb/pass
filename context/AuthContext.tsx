@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
-import { createContext, ReactNode, useContext, useState } from "react";
+import {createContext, ReactNode, useContext, useEffect, useState} from "react";
 import * as ImagePicker from "expo-image-picker";
 import {Alert} from "react-native";
 
@@ -17,14 +17,38 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
-
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  useEffect(() => {
+    checkSession()
+  },[]);
+
+  const checkSession= async()=>{
+    try{
+      setIsLoading(true);
+      const {data:{session}}= await supabase.auth.getSession();
+
+      if(session?.user){
+        const profile= await fetchUserProfile(session.user.id)
+        setUser(profile);
+      }else{
+        return null
+      }
+
+    }catch(e){
+      console.error("Error while fetching user session",e)
+      setUser(null)
+    }finally {
+      setIsLoading(false);
+    }
+  }
 
   const fetchUserProfile=async(userID:string) :Promise< User | null>=>{
     try{
@@ -61,40 +85,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return null
     }
   }
+
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
 
-    if (error) throw error;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (data.user) {
-      const profile= await fetchUserProfile(data.user.id);
-      setUser(profile)
-    }
+      if (error) throw error;
+
+      if (data.user) {
+        const profile= await fetchUserProfile(data.user.id);
+        setUser(profile)
+      }
+
+
   };
-
 
   const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    if (data.user) {
-      const profile= await fetchUserProfile(data.user.id);
-      setUser(profile)
-    }
+      if (data.user) {
+        const profile= await fetchUserProfile(data.user.id);
+        setUser(profile)
+      }
   };
-
 
   const updateUser = async (userData:Partial<User>) => {
     if(!user) return;
 
-    try{
       const updateData: Partial<User> = {};
       if(userData.name !== undefined) updateData.name= userData.name;
       if(userData.username !== undefined) updateData.username = userData.username;
@@ -105,20 +130,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if(error) throw error;
 
-    }catch(e){
-      console.error("Error updating user data", e);
-    }
-
   };
 
   return (
-    <AuthContext.Provider value={{ user,signIn, signUp,updateUser, }}>
+    <AuthContext.Provider value={{ user, isLoading, signIn, signUp,updateUser }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
+
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("must be inside the provider");

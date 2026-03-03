@@ -118,7 +118,7 @@ function Onboarding (){
                 onboarding_completed:true
             })
 
-            console.log("Every thing completer as per required")
+           router.push("/(tabs)/profile")
 
         }catch(e){
             Alert.alert("Error","Failed to complete the onboarding. Please try again.");
